@@ -1,0 +1,1 @@
+This is the start of the clustering module. All clustering exercises will be in this repo.
