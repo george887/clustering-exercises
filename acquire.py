@@ -19,10 +19,17 @@ def new_zillow_data():
     write it to a csv file, and returns the df. 
     '''
     # Selecting all data in the properties_2017 table
-    sql_query = '''SELECT * FROM properties_2017 as prop
-                LEFT JOIN predictions_2017 as pred on prop.id = pred.id
-                LEFT JOIN propertylandusetype as pluy on prop.propertylandusetypeid = pluy.propertylandusetypeid
-                WHERE transactiondate between '2017-01-01' and '2017-12-31'
+    sql_query = '''  select * from properties_2017
+                join predictions_2017 using (parcelid)
+                left join airconditioningtype using (airconditioningtypeid)
+                left join architecturalstyletype using (architecturalstyletypeid)
+                left join buildingclasstype using (buildingclasstypeid)
+                left join heatingorsystemtype using (heatingorsystemtypeid)
+                left join propertylandusetype using (propertylandusetypeid)
+                left join storytype using (storytypeid)
+                left join typeconstructiontype using (typeconstructiontypeid)
+                left join unique_properties using (parcelid)
+                where latitude is not null and longitude is not null;
                 '''
 
     # The pandas read_sql function allows us to create a df with the afformentioned sql querry    
