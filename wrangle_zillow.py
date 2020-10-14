@@ -65,81 +65,79 @@ def get_zillow_data(cached=False):
 
 #################### Prepare ##################
 
-def data_prep(df, cols_to_remove=[], prop_required_column = .6, prop_required_row = .75):
+def single_unit_properties(df):
+    '''This function will filter single unit properties, fillna's, drop unwanted columns, and replace features
     '''
-    This function removes columns and rows below the threshold
-    '''
-    df = df.drop(columns=cols_to_remove)  
-    df = handle_missing_values(df, prop_required_column, prop_required_row)
+    df = df[df.propertylandusetypeid.isin([260,261,262,279])]
+    df = df[(df.bedroomcnt > 0) & (df.bathroomcnt > 0)]
+    df.unitcnt = df.unitcnt.fillna(1)
+    df = df[df.unitcnt == 1.0]
+    df = df.drop(columns=["propertylandusetypeid", "heatingorsystemtypeid", 'propertyzoningdesc', 'calculatedbathnbr'])
+    df['heatingorsystemdesc'].replace(np.nan, 'none', inplace=True)
     return df
 
-def remove_columns(df, cols_to_remove): 
-    '''This function removes columns
-    ''' 
-    df = df.drop(columns=cols_to_remove)
-    return df
-    
-    # Remove rows & columns based on a minimum percentage of values available for each row/columns:
-def handle_missing_values(df, prop_required_column = .6, prop_required_row = .75):
+# How to call function df= single_unit_properties(df)
+
+def handle_missing_values(df, prop_required_column = .60, prop_required_row = .60):
+    ''' This function will drop na's when the required thresh is not met'''
     threshold = int(round(prop_required_column*len(df.index),0))
     df.dropna(axis=1, thresh=threshold, inplace=True)
     threshold = int(round(prop_required_row*len(df.columns),0))
     df.dropna(axis=0, thresh=threshold, inplace=True)
     return df
 
-    df = df.drop(columns=cols_to_remove)  
-    df = handle_missing_values(df, prop_required_column, prop_required_row)
+# How to call function df=handle_missing_values(df, prop_required_column = .60, prop_required_row = .60)
 
-    return df
-
-# Call the function like below
-#f = prepare.data_prep(
-#     df,
-#     cols_to_remove=[],
-#     prop_required_column=.6,
-#     prop_required_row=.75
-
-
-def missing_values(df):
-    ''' This function will calculate values of missing rows and return a missing rows df
+def impute_missing_values(df):
+    '''This function will split the data into train, validate and test data frames. I imputed the missing values of 
+    the list of features (Categorical/Discrete) using the mode or most common
     '''
-    # Gives value counts of missing rows
-    missing_row_value = df.isnull().sum()
-    # Gives the percentage of rows missing
-    percent_row_missing = round(df.isnull().sum()/len(df),2)*100
-    # Creates a new df for the missing rows and percent missing
-    missing_df = pd.DataFrame({'missing_rows' : missing_row_value, 'percent_missing' : percent_row_missing})
-    return missing_df
 
-def missing_cols(df):
-    ''' This function will calculate values of missing columns and return a missing columns df
+    train_and_validate, test = train_test_split(df, test_size=.2, random_state=123)
+    train, validate = train_test_split(train_and_validate, test_size=.3, random_state=123)
+    
+    cols1 = [
+    "buildingqualitytypeid",
+    "regionidcity",
+    "regionidzip",
+    "yearbuilt",
+    "regionidcity",
+    "censustractandblock"
+    ]
+
+    for col in cols1:
+        mode = int(train[col].mode()) # I had some friction when this returned a float (and there were no decimals anyways)
+        train[col].fillna(value=mode, inplace=True)
+        validate[col].fillna(value=mode, inplace=True)
+        test[col].fillna(value=mode, inplace=True)
+
+    return train, validate, test
+
+# How to call function train, validate, test =impute_missing_values(df)
+
+def impute_missing_values_1():
+    '''This function will split the data into train, validate and test data frames. I imputed the missing values of 
+    the list of features (Continuous columns) using the median
     '''
-    # df.loc[ : ].count() means we're looking at every row to count the number of null values in each row 
-    # .isna() shows if there are booleans if there is nulls. .any() looks for true values from the isna()
-    # summing the count of trues with .count()
-    missing_cols = df.loc[:, df.isna().any()].count()
-    # len(df.index) shows the number of rows
-    percent_cols_missing = round(df.loc[:, df.isna().any()].count()/ len(df.index) *100 ,2)
-    missing_cols_df = pd.DataFrame({'missing_columns' : missing_cols, 'percent_columns_missing' : percent_cols_missing})
-    return missing_cols_df
 
-def single_unit_properties(df):
-    # Creating df to meet criteria of single unit homes
-    unitcnt_df = df[df.unitcnt == 1]
-    bedroom_df = df[df.bedroomcnt > 0]
-    bathroom_df = df[df.bathroomcnt > 0]
-    # using | == (or) to filter properties based on land use type id
-    single_prop_df = df[(df.propertylandusetypeid == 261) | (df.propertylandusetypeid == 263) | (df.propertylandusetypeid == 264) \
-                 | (df.propertylandusetypeid == 266) | (df.propertylandusetypeid == 270) | (df.propertylandusetypeid == 273) \
-                 | (df.propertylandusetypeid == 274) | (df.propertylandusetypeid == 275) | (df.propertylandusetypeid == 279)]
-    # Concat all the df together. Dropping duplicate 'ids' as each property has a unique id.
-    # reset index in case of multiple indexes being created
-    single_unit_df = pd.concat([unitcnt_df, bedroom_df, bathroom_df, single_prop_df]).drop_duplicates('id').reset_index(drop=True)
-    return single_unit_df
+    cols = [
+        "structuretaxvaluedollarcnt",
+        "taxamount",
+        "taxvaluedollarcnt",
+        "landtaxvaluedollarcnt",
+        "structuretaxvaluedollarcnt",
+        "finishedsquarefeet12",
+        "calculatedfinishedsquarefeet",
+        "fullbathcnt",
+        "lotsizesquarefeet"
+    ]
 
-def handle_missing_values(df, prop_required_column, prop_required_row):
-    threshold = int(round(prop_required_column*len(df.index),0))
-    df.dropna(axis=1, thresh = threshold, inplace=True)
-    threshold = int(round(prop_required_row*len(df.columns),0))
-    df.dropna(axis=0, thresh=threshold, inplace=True)
-    return df
+    for col in cols:
+        median = train[col].median()
+        train[col].fillna(median, inplace=True)
+        validate[col].fillna(median, inplace=True)
+        test[col].fillna(median, inplace=True)
+        
+    return train, validate, test
+
+# How to call function train, validate, test = impute_missing_values_1()
