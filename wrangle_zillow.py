@@ -7,6 +7,8 @@ import os
 # allows us to ignore any warnings
 import warnings
 warnings.filterwarnings("ignore")
+# imports the train test split
+from sklearn.model_selection import train_test_split
 
 ########################## Establishing connection ###########################
 # establish mysql connection
@@ -115,7 +117,7 @@ def impute_missing_values(df):
 
 # How to call function train, validate, test =impute_missing_values(df)
 
-def impute_missing_values_1():
+def impute_missing_values_1(train, validate, test):
     '''This function will split the data into train, validate and test data frames. I imputed the missing values of 
     the list of features (Continuous columns) using the median
     '''
@@ -140,4 +142,4 @@ def impute_missing_values_1():
         
     return train, validate, test
 
-# How to call function train, validate, test = impute_missing_values_1()
+# How to call function train, validate, test = impute_missing_values_1(train, validate, test)
