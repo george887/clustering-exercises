@@ -72,9 +72,10 @@ def single_unit_properties(df):
     '''
     df = df[df.propertylandusetypeid.isin([260,261,262,279])]
     df = df[(df.bedroomcnt > 0) & (df.bathroomcnt > 0)]
+    df = df[(df.bedroomcnt < 6) & (df.bathroomcnt < 5)]
     df.unitcnt = df.unitcnt.fillna(1)
     df = df[df.unitcnt == 1.0]
-    df = df.drop(columns=["propertylandusetypeid", "heatingorsystemtypeid", 'propertyzoningdesc', 'calculatedbathnbr'])
+    df = df.drop(columns=["propertylandusetypeid", "heatingorsystemtypeid", 'propertyzoningdesc', 'calculatedbathnbr', "id", "id.1"])
     df['heatingorsystemdesc'].replace(np.nan, 'none', inplace=True)
     return df
 
