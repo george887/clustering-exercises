@@ -8,6 +8,12 @@ import os
 import warnings
 warnings.filterwarnings("ignore")
 from sklearn.preprocessing import StandardScaler, QuantileTransformer, PowerTransformer, RobustScaler, MinMaxScaler
+# imports the train test split
+from sklearn.model_selection import train_test_split
+
+# establish mysql connection
+def get_connection(db, user=user, host=host, password=password):
+    return f'mysql+pymysql://{user}:{password}@{host}/{db}'
 
 #################### Mall Customers Data #####################
 
